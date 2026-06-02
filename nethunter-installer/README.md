@@ -21,35 +21,42 @@ To do this, run the command:
 
 Example building for the Nexus 5 (hammerhead):
 ```sh
-python build.py -d hammerhead --marshmallow
+python3 build.py -d hammerhead --marshmallow
 ```
 Building the kernel only (useful for testing if kernel works):
 ```sh
-python build.py -d hammerhead --marshmallow -k
+python3 build.py -d hammerhead --marshmallow -k
 ```
 Building without the kernel (useful for just updating apps):
 ```sh
-python build.py -d hammerhead --marshmallow -nk
+python3 build.py -d hammerhead --marshmallow -nk
 ```
 Building with adding a full chroot (add kalifs-full.tar.xz to rootfs/[arch]/kalifs-full.tar.xz):
 ```sh
-python build.py -d hammerhead --marshmallow --rootfs full
+python3 build.py -d hammerhead --marshmallow --rootfs full
 ```
 Create a release version:
 ```sh
-python build.py -d hammerhead --marshmallow --rootfs full --release v3.0
+python3 build.py -d hammerhead --marshmallow --rootfs full --release v3.0
 ```
 Force download all third party apps:
 ```sh
-python build.py --forcedown
+python3 build.py --forcedown
 ```
 Building the uninstaller:
 ```sh
-python build.py --uninstaller
+python3 build.py --uninstaller
 ```
 Show help:
 ```bash
-python build.py -h
+python3 build.py -h
+```
+
+### First release package (generic kernel installer)
+
+To generate an initial flashable package without a device checkout:
+```sh
+python3 build.py --generic arm64 --kernel --release v1.0.0
 ```
 
 ## How to add a new/unsupported device

@@ -4,7 +4,10 @@ import requests
 import zipfile
 import fnmatch
 import shutil
-import ConfigParser
+try:
+	import configparser
+except ImportError:
+	import ConfigParser as configparser
 import re
 import argparse
 import datetime
@@ -95,14 +98,14 @@ def download(url, file_name, verify_sha):
 				status = r"%10d" % dl_bytes
 
 			status = status + chr(8) * (len(status) + 1)
-			print status,
-		print
+			print(status, end='')
+		print()
 		download_ok = True
 	except requests.exceptions.RequestException as e:
-		print
+		print()
 		print('Error: ' + str(e))
 	except KeyboardInterrupt:
-		print
+		print()
 		print('Download cancelled')
 
 	f.flush()
@@ -174,7 +177,7 @@ def allapps(forcedown):
 	if forcedown:
 		print('Force redownloading all apps')
 
-	for key, value in dl_apps.iteritems():
+	for key, value in dl_apps.items():
 		apk_name = key + '.apk'
 		apk_path = os.path.join(app_path, apk_name)
 		apk_url = value[0]
@@ -200,8 +203,8 @@ def rootfs(forcedown, fs_size, nightly):
 	##if Arch == 'arm64':
 	##	fs_arch = 'armhf'
 	##else:
-       	##      fs_arch = Arch
-       	fs_arch = Arch
+	##	fs_arch = Arch
+	fs_arch = Arch
 
 	fs_file = 'kalifs-' + fs_arch + '-' + fs_size + '.tar.xz'
 	fs_path = os.path.join('rootfs', fs_file)
@@ -230,9 +233,9 @@ def addrootfs(fs_size, dst):
 	global Arch
 
 	# temporary hack until arm64 support is completed
-        ## Update 2019-01-25: Disable workaround to use proper arm64 rootfs as it should be fully working now, Re4son
+	## Update 2019-01-25: Disable workaround to use proper arm64 rootfs as it should be fully working now, Re4son
 	##if Arch == 'arm64':
-        ##		fs_arch = 'armhf'
+	##		fs_arch = 'armhf'
 	##else:
 	##	fs_arch = Arch
 	fs_arch = Arch
@@ -281,7 +284,7 @@ def configfile(file_name, values):
 	file_handle.close()
 
 	# Replace values of variables
-	for key, value in values.iteritems():
+	for key, value in values.items():
 		# Quote value if not already quoted
 		if value and not (value[0] == value[-1] and (value[0] == '"' or value[0] == "'")):
 			value = '"%s"' % value
@@ -466,17 +469,23 @@ def main():
 	# Remove any existing builds that might be left
 	cleanup(True)
 
-	# Read devices.cfg, get device names
-	try:
-		Config = ConfigParser.ConfigParser()
-		Config.read(devices_cfg)
-		devicenames = Config.sections()
-	except:
-		abort('Could not read %s! Maybe you need to run ./bootstrap.sh?' % devices_cfg)
+	Config = None
+	devicenames = []
+	help_device = 'Device name from devices/devices.cfg (run ./bootstrap.sh first).'
 
-	help_device = 'Allowed device names: \n'
-	for device in devicenames:
-		help_device += '    %s\n' % device
+	# Read devices.cfg only if it exists. It is not required for uninstaller/generic builds.
+	if os.path.isfile(devices_cfg):
+		try:
+			Config = configparser.ConfigParser()
+			Config.read(devices_cfg)
+			devicenames = Config.sections()
+			if devicenames:
+				help_device = 'Allowed device names: \n'
+				for device in devicenames:
+					help_device += '    %s\n' % device
+		except Exception:
+			# Keep device help generic and validate later if --device is selected.
+			Config = None
 
 	parser = argparse.ArgumentParser(description='Kali NetHunter recovery flashable zip builder')
 	parser.add_argument('--device', '-d', action='store', help=help_device)
@@ -506,6 +515,8 @@ def main():
 		abort('The device and generic switches are mutually exclusive')
 
 	if args.device:
+		if not devicenames:
+			abort('Could not read %s! Maybe you need to run ./bootstrap.sh?' % devices_cfg)
 		if args.device in devicenames:
 			Device = args.device
 		else:
